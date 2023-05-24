@@ -1,3 +1,5 @@
+
+
 import os 
 from pathlib import Path 
 import pickle
@@ -128,3 +130,19 @@ class Kalaka(Dataset):
                             
                     # print(f'[{i+1}/{num_files}]')
 
+    def get_metrics_per_language(self) -> dict:
+        file = open(self.key_file)
+        num_files = {'Basque': 0,  'Catalan': 0,  'English': 0,  'Galician': 0,  'Portuguese': 0,  'Spanish': 0}
+        for line in file:
+            language = line.split()[1].strip()
+            num_files[language] += 1
+            
+        minutes = {'Basque': 0,  'Catalan': 0,  'English': 0,  'Galician': 0,  'Portuguese': 0,  'Spanish': 0}
+        with open(self.key_file) as file:
+            for line in tqdm(file.readlines()):
+                basename, language, _ = line.split()[0].strip(), line.split()[1].strip(), int(line.split()[2].strip())
+                audioin = self.audio_dir / f'{basename}.wav'
+                minutes[language] += librosa.get_duration(filename=audioin)
+        return num_files
+            
+        
