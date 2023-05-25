@@ -130,7 +130,7 @@ class Kalaka(Dataset):
                             
                     # print(f'[{i+1}/{num_files}]')
 
-    def get_metrics_per_language(self) -> dict:
+    def get_metrics_per_language(self):
         file = open(self.key_file)
         num_files = {'Basque': 0,  'Catalan': 0,  'English': 0,  'Galician': 0,  'Portuguese': 0,  'Spanish': 0}
         for line in file:
@@ -143,6 +143,6 @@ class Kalaka(Dataset):
                 basename, language, _ = line.split()[0].strip(), line.split()[1].strip(), int(line.split()[2].strip())
                 audioin = self.audio_dir / f'{basename}.wav'
                 minutes[language] += librosa.get_duration(filename=audioin)
-        return num_files
+        return num_files, minutes
             
         
