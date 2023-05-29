@@ -6,3 +6,6 @@ speechbrain
 torch
 torchaudio
 tqdm
+opensmile
+scipy
+torchvision
