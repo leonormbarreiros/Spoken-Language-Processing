@@ -17,7 +17,7 @@ import utils
 
 class CNN(nn.Module):
     
-    def __init__(self, dropout_prob):
+    def __init__(self, dropout_prob, max_size):
         """
         The __init__ should be used to declare what kind of layers and other
         parameters the module has. For example, a CNN module has convolution,
@@ -27,24 +27,25 @@ class CNN(nn.Module):
         """
         super(CNN, self).__init__()
 
-        #conv1 with 8 output channels, kernel of size 5*5, stride of 1 
-        #padding: (2 x Padding + N - Kernel)/Stride + 1 = 301 <=> Padding = 3
-        #padding: (2 x Padding + N - Kernel)/Stride + 1 = 7683 <=> Padding = 3694
-        self.conv1 = nn.Conv2d(1, 8, 5, padding=(3, 3694))
+        # conv1 with 8 output channels, kernel of size 5*5, stride of 1 
+        # 300 = (300 + 2 * padding - 5) / 1 + 1 <=> 300 = 295 + 2 * padding + 1 <=> 300 - 296 = 2 * padding <=> 2 * padding = 4 <=> padding = 2
+        # 40 = (40 + 2 * padding - 5) / 1 + 1 <=> 40 = 35 + 2 * padding + 1 <=> 40 - 36 = 2 * padding <=> 2 * padding = 4 <=> padding = 2
+        self.conv1 = nn.Conv2d(1, 8, 5, padding=(2,2))
         self.max_pool = nn.MaxPool2d(2,2)
+        # after max_pooling: (150, 20)
         
-        # output_windth = (301 + 2*3 - 5)/ 1 + 1 = 303
-        # output_height = (7683 + 2*3694 - 5)/ 1 + 1 = 15067
-
-        #conv2 with 16 output channels, kernel of size 3x3, stride of 1 
-        # TODO check padding
-        self.conv2 = nn.Conv2d(8, 16, 3, padding = (0, 0))
+        # conv2 with 16 output channels, kernel of size 3x3, stride of 1 
+        # 150 = (150 + 2 * padding - 3) / 1 + 1 <=> 150 = 147 + 2 * padding + 1 <=> 150 - 148 = 2 * padding <=> 2 * padding = 2 <=> padding = 1
+        # 20 = (20 + 2 * padding - 3) / 1 + 1 <=> 20 = 17 + 2 * padding + 1 <=> 20 - 18 = 2 * padding <=> 2 * padding = 2 <=> padding = 1
+        self.conv2 = nn.Conv2d(8, 16, 3, padding = (1,1))
         
-        # output_windth = (303 + 2*0 - 3)/ 1 + 1 = 301
-        # output_height = (15067 + 2*0 - 3)/ 1 + 1 = 15065
-
-        # input features = #output_channels x output_width x output_height
-        self.fc1 = nn.Linear(301*15065*16, 600)
+        # output_width = (input_width + 2 * padding - kernel_size) / stride + 1
+        #              = (150 + 2*1 - 3) / 1 + 1 = 150
+        # output_height = (input_height + 2 * padding - kernel_size) / stride + 1
+        #               = (20 + 2*1 - 3) / 1 + 1 = 20  
+        
+        # input features = output_channels x output_width x output_height
+        self.fc1 = nn.Linear(16 * 150 * 20, 600)
         self.dropout = nn.Dropout2d(p=dropout_prob)
         self.fc2 = nn.Linear(600, 120)
         self.fc3 = nn.Linear(120, 6)    
@@ -67,7 +68,8 @@ class CNN(nn.Module):
         """
         # 3d: [batch_size, channels, num_features (aka: H * W)]
         # 4d: [batch_size, channels, height, width]  --->  x.shape = [1, 1, 8, 784]
-        x = x.view(x.shape[0], 1, 345, 7683)    
+        # print(x.shape)
+        # x = x.view(1, 1, 16, 41)    
         x = F.relu(self.max_pool(self.conv1(x)))
         
         x = F.relu(self.max_pool(self.conv2(x)))
@@ -75,7 +77,7 @@ class CNN(nn.Module):
         print(x.shape)
         #flatten the output from previous layer and slide it through only set of fully connected - relu layer
         x = torch.flatten(x, 1) 
-        x = x.view(-1, 301*15065*16)        
+        x = x.view(-1, 16 * 300 * 40)        
         x = self.fc1(x)
         x = self.dropout(F.relu(x))
         x =  F.log_softmax(self.fc3(F.relu(self.fc2(x))), dim=1)
