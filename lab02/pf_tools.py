@@ -142,7 +142,7 @@ class Kalaka(Dataset):
             for line in tqdm(file.readlines()):
                 basename, language, _ = line.split()[0].strip(), line.split()[1].strip(), int(line.split()[2].strip())
                 audioin = self.audio_dir / f'{basename}.wav'
-                minutes[language] += librosa.get_duration(filename=audioin)
+                minutes[language] += librosa.get_duration(filename=audioin) / 60.0
         return num_files, minutes
             
         
